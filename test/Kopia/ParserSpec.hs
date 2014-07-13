@@ -53,3 +53,17 @@ spec = do
                 it "should throw if MAXIMUM is not a number" $ do
                     parse ["a", "b", "record", "123", "--max=abc"]
                         `shouldThrow` (== ExitFailure 1)
+            describe "list" $ do
+                it "should parse a list command" $ do
+                    a <- parse ["a", "b", "list", "name"]
+                    a `shouldBe` Command (Bridge "a" "b") (List "name" 100 Newest)
+                    b <- parse ["a", "b", "list", "name", "--max=123"]
+                    b `shouldBe` Command (Bridge "a" "b") (List "name" 123 Newest)
+                    c <- parse ["a", "b", "list", "name", "--order=oldest"]
+                    c `shouldBe` Command (Bridge "a" "b") (List "name" 100 Oldest)
+                it "should throw if MAXIMUM is not a number" $ do
+                    parse ["a", "b", "list", "name", "--max=abc"]
+                        `shouldThrow` (== ExitFailure 1)
+                it "should throw if ORDER is not valid" $ do
+                    parse ["a", "b", "list", "name", "--order=abc"]
+                        `shouldThrow` (== ExitFailure 1)

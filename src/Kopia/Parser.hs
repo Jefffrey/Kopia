@@ -55,7 +55,9 @@ listActionTemplate =
             &= Cmd.argPos 0
             &= Cmd.typ "NAME"
         , max = 100
-            &= Cmd.typ "MAXIMUM" }
+            &= Cmd.typ "MAXIMUM"
+        , order = Cmd.def
+            &= Cmd.typ "ORDER" }
     &= Cmd.help "Lists all the snapshots of an event"
 
 clearActionTemplate :: Action
