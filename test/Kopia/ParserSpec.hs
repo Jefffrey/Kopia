@@ -32,3 +32,24 @@ spec = do
                 it "should throw on too many arguments" $ do
                     parse ["a", "b", "name", "extra"]
                         `shouldThrow` (== ExitFailure 1)
+            describe "record" $ do
+                it "should parse a record command" $ do
+                    a <- parse ["a", "b", "record", "name", "123"]
+                    a `shouldBe` Command (Bridge "a" "b") (Record "name" 123 1)
+                    b <- parse ["a", "b", "record", "name", "123", "--max=456"]
+                    b `shouldBe` Command (Bridge "a" "b") (Record "name" 123 456)
+                it "should throw on lack of arguments" $ do
+                    parse ["a", "b", "record"] `shouldThrow` (== ExitFailure 1)                    
+                    parse ["a", "b", "record", "name"]
+                        `shouldThrow` (== ExitFailure 1)
+                    parse ["a", "b", "record", "--max=456"]
+                        `shouldThrow` (== ExitFailure 1)
+                it "should throw on too many arguments" $ do
+                    parse ["a", "b", "record", "123", "extra"] 
+                        `shouldThrow` (== ExitFailure 1)
+                it "should throw if MINUTES is not a number" $ do
+                    parse ["a", "b", "record", "abc"]
+                        `shouldThrow` (== ExitFailure 1)
+                it "should throw if MAXIMUM is not a number" $ do
+                    parse ["a", "b", "record", "123", "--max=abc"]
+                        `shouldThrow` (== ExitFailure 1)
