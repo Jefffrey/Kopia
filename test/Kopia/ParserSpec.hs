@@ -23,3 +23,12 @@ spec = do
                 it "should throw on too many arguments" $ do
                     parse ["a", "b", "status", "extra"]
                         `shouldThrow` (== ExitFailure 1)
+            describe "take" $ do
+                it "should parse a take command" $ do
+                    command <- parse ["a", "b", "take", "name"]
+                    command `shouldBe` Command (Bridge "a" "b") (Take "name")
+                it "should throw on lack of arguments" $ do
+                    parse ["a", "b", "take"] `shouldThrow` (== ExitFailure 1)
+                it "should throw on too many arguments" $ do
+                    parse ["a", "b", "name", "extra"]
+                        `shouldThrow` (== ExitFailure 1)
