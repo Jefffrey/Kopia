@@ -67,3 +67,36 @@ spec = do
                 it "should throw if ORDER is not valid" $ do
                     parse ["a", "b", "list", "name", "--order=abc"]
                         `shouldThrow` (== ExitFailure 1)
+            describe "clear" $ do
+                it "should parse a clear command" $ do
+                    a <- parse ["a", "b", "clear", "name"]
+                    a `shouldBe` Command (Bridge "a" "b") (Clear "name")
+                it "should throw on lack of arguments" $ do
+                    parse ["a", "b", "clear"]
+                        `shouldThrow` (== ExitFailure 1)
+                it "should throw on too many arguments" $ do
+                    parse ["a", "b", "clear", "name", "extra"]
+                        `shouldThrow` (== ExitFailure 1)
+            describe "remove" $ do
+                it "should parse a remove command" $ do
+                    a <- parse ["a", "b", "remove", "name", "123"]
+                    a `shouldBe` Command (Bridge "a" "b") (Remove "name" 123 1)
+                    b <- parse ["a", "b", "remove", "name", "123", "--max=456"]
+                    b `shouldBe` Command (Bridge "a" "b") (Remove "name" 123 456)
+                it "should enforce integral arguments" $ do
+                    parse ["a", "b", "remove", "name", "abc"]
+                        `shouldThrow` (== ExitFailure 1)
+                    parse ["a", "b", "remove", "name", "123", "--max=abc"]
+                        `shouldThrow` (== ExitFailure 1)
+                it "should throw on lack of arguments" $ do
+                    parse ["a", "b", "remove"]
+                        `shouldThrow` (== ExitFailure 1)
+                    parse ["a", "b", "remove", "name"]
+                        `shouldThrow` (== ExitFailure 1)
+            describe "restore" $ do
+                it "should parse a restore command" $ do
+                    a <- parse ["a", "b", "restore", "name", "123"]
+                    a `shouldBe` Command (Bridge "a" "b") (Restore "name" 123)
+                it "should enforce integral arguments" $ do
+                    parse ["a", "b", "restore", "name", "abc"]
+                        `shouldThrow` (== ExitFailure 1)
