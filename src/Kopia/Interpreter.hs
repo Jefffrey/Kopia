@@ -10,6 +10,20 @@ import Kopia.Command
 import qualified System.Directory as Dir
 import qualified Data.Time as Time
 
+showMessage :: String -> IO ()
+showMessage = putStrLn . ("\n"++)
+
+showError :: String -> IO ()
+showError = putStrLn . ("\n"++)
+
+formatIOError :: IOError -> String
+formatIOError e = 
+    let f = ioeGetFileName e
+        s = ioeGetErrorString e
+    in case f of
+        Nothing -> s
+        Just x -> s ++ " (" ++ x ++ ")"
+
 kopiaName :: String -> UTCTime -> String
 kopiaName name utc =
     let day = Time.utctDay utc
@@ -42,13 +56,23 @@ copyDir from to = do
     (mapM_ (copyElem from to) . filter (\i -> i /= "." && i /= "..")) contents
 
 execTake :: String -> Bridge -> IO ()
-execTake name (Bridge source target) = do
+execTake name (Bridge target destination) = do
     catchIOError 
         (do
             t <- Time.getCurrentTime
-            let kName = kopiaName name t
-            copyDir target (source </> kName))
-        (\_ -> putStrLn "Couldn't take snapshot")
+            let fullDestination = destination </> kopiaName name t
+            copyDir target fullDestination 
+            showMessage . unlines $
+                [ "Snapshot taken"
+                , "Time: " ++ show t
+                , "Event name: " ++ name
+                , "Target directory: " ++ target
+                , "Destination directory: " ++ destination
+                , "Snapshot location: " ++ fullDestination ])
+        (\e -> do
+            showError . unlines $
+                [ "Couldn't take snapshot"
+                , "Error: " ++ formatIOError e ])
 
 execute :: Command -> IO ()
 execute (Command b (Take n)) = execTake n b

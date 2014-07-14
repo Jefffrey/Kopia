@@ -10,12 +10,12 @@ import qualified System.Console.CmdArgs as Cmd
 bridgeTemplate :: Bridge
 bridgeTemplate = 
     Bridge 
-        { storage = Cmd.def 
-            &= Cmd.argPos 0 
-            &= Cmd.typ "STORAGE"
-        , target = Cmd.def 
+        { target = Cmd.def 
+            &= Cmd.argPos 0
+            &= Cmd.typ "TARGET" 
+        , destination = Cmd.def 
             &= Cmd.argPos 1 
-            &= Cmd.typ "TARGET" }
+            &= Cmd.typ "DESTINATION" }
     &= Cmd.summary "Kopia - backup system"
     &= Cmd.help "Estabilish bridge"
     &= Cmd.helpArg [Cmd.explicit, Cmd.name "help", Cmd.name "h"]

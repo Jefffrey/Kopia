@@ -11,8 +11,8 @@ instance Default Order where
 
 data Bridge
     = Bridge
-        { storage   :: FilePath
-        , target    :: FilePath }
+        { target        :: FilePath
+        , destination   :: FilePath }
     deriving (Data, Typeable, Show, Eq)
 
 data Action
