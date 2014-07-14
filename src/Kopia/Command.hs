@@ -16,7 +16,7 @@ data Bridge
     deriving (Data, Typeable, Show, Eq)
 
 data Action
-    = Status
+    = Test
     | Take { name :: String }
     | Record { name :: String, minutes :: Int, max :: Int }
     | List { name :: String, max :: Int, order :: Order }

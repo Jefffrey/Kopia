@@ -11,17 +11,17 @@ spec = do
         describe "Bridge" $ do
             it "should parse a bridge" $ do
                 command <- parse ["abc", "def"]
-                command `shouldBe` Command (Bridge "abc" "def") Status
+                command `shouldBe` Command (Bridge "abc" "def") Test
             it "should throw on lack of a bridge" $ do
                 parse ["acb"] `shouldThrow` (== ExitFailure 1)
                 parse [] `shouldThrow` (== ExitFailure 1)
         describe "Action" $ do
             describe "status" $ do
-                it "should parse a status command" $ do
-                    command <- parse ["a", "b", "status"]
-                    command `shouldBe` Command (Bridge "a" "b") Status
+                it "should parse a test command" $ do
+                    command <- parse ["a", "b", "test"]
+                    command `shouldBe` Command (Bridge "a" "b") Test
                 it "should throw on too many arguments" $ do
-                    parse ["a", "b", "status", "extra"]
+                    parse ["a", "b", "test", "extra"]
                         `shouldThrow` (== ExitFailure 1)
             describe "take" $ do
                 it "should parse a take command" $ do

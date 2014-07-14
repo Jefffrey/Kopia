@@ -24,8 +24,8 @@ bridgeTemplate =
 parseBridge :: IO Bridge
 parseBridge = Cmd.cmdArgsRun $ Cmd.cmdArgsMode bridgeTemplate
 
-statusActionTemplate :: Action
-statusActionTemplate = Status &= Cmd.help "Check status of the bridge"
+testActionTemplate :: Action
+testActionTemplate = Test &= Cmd.help "Tests the bridge"
 
 takeActionTemplate :: Action
 takeActionTemplate = 
@@ -96,7 +96,7 @@ actionMode :: Mode (CmdArgs Action)
 actionMode = 
     Cmd.cmdArgsMode $
         Cmd.modes 
-            [ statusActionTemplate &= Cmd.auto
+            [ testActionTemplate &= Cmd.auto
             , takeActionTemplate
             , recordActionTemplate
             , listActionTemplate
