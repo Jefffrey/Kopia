@@ -1,47 +1,80 @@
 #Kopia
 
-Kopia is a simple and customizable backup system. It doesn't use configuration files.
+[![Build Status](https://travis-ci.org/Jefffrey/Kopia.svg?branch=master)](https://travis-ci.org/Jefffrey/Kopia)
 
-##Events and snapshots
+Kopia is a simple backup system. It's extremely thin and doesn't store any sort of configurations file and or junk-files.
 
-An event is a set of snapshots referred to by a short name. A snaphot is a particular backup in time. Every snapshot is defined within the event namespace.
+##Targets, destinations and bridges
 
-##Bridge
+A *target* directory is a directory you want to take backups of. Kopia will always ask you permission to modify its contents.
 
-Kopia always requires two initial paths:
-    
-- the target path
-- the destination path
+A *destination* directory is the location in which you want to store the backups. This folder can also be non empty, but no guarantees are made to the existing contents, if any. 
 
-The target path is the folder you want to take snapshots of; the destination path is a folder in which you want to store the events. The destination folder is created (as well as the parents) if missing. 
+If the specified destination doesn't exists, then it is automatically created (even parent directories).
 
-A pair of `(target, destination)` is called a *bridge*. You can picture a *bridge* as a connection between two folders in which you can:
+The pair target-destination defines a *bridge*; a connection between a directory of interest and the backups location. You'll always need to specify a bridge for any operation. 
 
-- take backups
-- restore backups
+It is recommended that you set aliases for common backups:
+
+```
+alias project_a='kopia "project_a/" "backups_a/"'
+alias project_b='kopia "project_b/" "backups_b/"'
+```
+
+##Snapshots and events
+
+Once a bridge has been estabilished, you can take snaphots (specific revision of your target directory). 
+
+Snaphosts are always organized in groups called "*events*". An event, identified by a short (directory name friendly) name. Events allow you to easily manage groups of related snapshots as a unit.
+
+For example:
+
+```
+kopia_alias clear "event"
+kopia_alias record "event" 60
+```
+
+will respectively remove all snapshots contained in the event "event" and then start a record session that will take a snaphot every minute.
+
+##Directory organization
+
+Kopia organizes backups into a very simple and human readable form:
+
+```
+destination/
+    [event name]/
+        kopia_[dd]-[mm]-[yyyy]_[hh]-[mm]-[ss]/
+        .../
+        .../
+    .../
+    .../
+```
+
+The resulting directory structure is completely indipendent from Kopia and can be manually managed without risks. Remember that Kopia also operates on the destination directory.
 
 ##Commands
 
 You can define a bridge by specifying, in order, the target and destination, as follows:
 
 ```
-kopia "target/" "destination/"
+kopia "target_a/" "destination_a/" [action]
+kopia "target_b/" "destination_b/" [action]
 ```
 
-It is recommended that you set aliases of common backups, for example with:
+A bridge is only conceptually defined. There's no need to initialize or configure a bridge. Once you have defined which is the target and which is the destination, you can issue any of the following commands.
+
+For convenience, we will consider the following alias:
 
 ```
-alias common_kopia='kopia "target/" "destination/"'
+alias kopia_alias='kopia "target/" "destination/"'
 ```
 
-Everything specified later must be one of the following commands.
-
-###`take`
+####Takings snapshots
 
 In order to take a single snapshot, you can issue:
 
 ```
-common_kopia take "name"
+kopia_alias take "name"
 ```
 
-where `name` is the name of the event.
+where `name` is the name of the event in which to place the snapshot.
