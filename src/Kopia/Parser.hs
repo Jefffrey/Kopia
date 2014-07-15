@@ -4,7 +4,8 @@ import Prelude hiding (max, id)
 import System.Environment (withArgs)
 import System.Console.CmdArgs ((&=), CmdArgs, Mode, Default)
 import System.Console.CmdArgs.Explicit (process)
-import Kopia.Command (Command(..), Bridge(..), Action(..))
+import Kopia.Bridge (Bridge(..))
+import Kopia.Command (Command(..), Action(..))
 import qualified System.Console.CmdArgs as Cmd
 
 bridgeTemplate :: Bridge

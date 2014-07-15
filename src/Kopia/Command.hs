@@ -1,5 +1,10 @@
-module Kopia.Command where
+module Kopia.Command 
+    ( Order(..)
+    , Action(..)
+    , Command(..)
+    ) where
 
+import Kopia.Bridge (Bridge)
 import System.Console.CmdArgs (Data, Typeable, Default, def)
 
 data Order
@@ -8,12 +13,6 @@ data Order
 
 instance Default Order where
     def = Newest
-
-data Bridge
-    = Bridge
-        { target        :: FilePath
-        , destination   :: FilePath }
-    deriving (Data, Typeable, Show, Eq)
 
 data Action
     = Test

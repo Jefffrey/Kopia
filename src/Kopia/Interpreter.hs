@@ -1,12 +1,11 @@
 module Kopia.Interpreter (execute) where
 
-import System.FilePath ((</>))
-import Data.Time (UTCTime, formatTime, readTime, getCurrentTime)
 import System.IO.Error (catchIOError, ioeGetErrorString, ioeGetFileName)
-import System.Locale (defaultTimeLocale)
-import Kopia.Command
+import Kopia.Command (Command(..), Action(..))
+import Kopia.Bridge (Bridge(..))
 import Kopia.Filesystem (copyDir)
-import qualified System.Directory as Dir
+import System.Directory (getDirectoryContents)
+import qualified Kopia.Snapshot as Snapshot
 
 showMessage :: String -> IO ()
 showMessage = putStrLn . ("\n"++)
@@ -22,26 +21,12 @@ formatIOError e =
         Nothing -> s
         Just x -> s ++ " (" ++ x ++ ")"
 
-formatUTC :: UTCTime -> String
-formatUTC utc = formatTime defaultTimeLocale "kopia_%d-%m-%y_%H-%M-%S" utc
-
-readUTC :: String -> UTCTime
-readUTC str = readTime defaultTimeLocale "kopia_%d-%m-%y_%H-%M-%S" str
-
 execTake :: String -> Bridge -> IO ()
-execTake name (Bridge target destination) = do
+execTake e b = do
     catchIOError 
         (do
-            t <- getCurrentTime
-            let fullDestination = destination </> name </> formatUTC t
-            copyDir target fullDestination 
-            showMessage . unlines $
-                [ "Snapshot taken"
-                , "Time: " ++ show t
-                , "Event name: " ++ name
-                , "Target directory: " ++ target
-                , "Destination directory: " ++ destination
-                , "Snapshot location: " ++ fullDestination ])
+            s <- Snapshot.take e b
+            showMessage . unlines $ ["Snapshot taken!", show s])
         (\e -> do
             showError . unlines $
                 [ "Couldn't take snapshot"
