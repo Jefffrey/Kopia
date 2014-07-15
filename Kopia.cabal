@@ -13,7 +13,7 @@ executable Kopia
     hs-source-dirs:
         src
     build-depends:
-        base == 4.6.*,
+        base,
         directory,
         text,
         cmdargs,
@@ -28,7 +28,7 @@ Test-Suite test-solidran
     hs-source-dirs:         test, src
     main-is:                Spec.hs
     build-depends:
-        base == 4.6.*,
+        base,
         directory,
         text,
         cmdargs,
