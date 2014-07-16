@@ -1,8 +1,22 @@
-module Kopia.Filesystem (copyDir) where
+module Kopia.Filesystem
+    ( copyDir
+    , listDirs
+    ) where
 
 import System.FilePath ((</>))
-import Control.Monad (when)
+import Control.Monad (when, filterM)
 import qualified System.Directory as Dir
+
+listAll :: FilePath -> IO [String]
+listAll p = do
+    c <- Dir.getDirectoryContents p
+    let r = filter (\i -> i /= "." && i /= "..") c
+    return r
+
+listDirs :: FilePath -> IO [String]
+listDirs p = do
+    c <- listAll p
+    filterM (Dir.doesDirectoryExist . (p </>)) c
 
 copyElem :: FilePath -> FilePath -> String -> IO ()
 copyElem from to n = do
@@ -16,5 +30,5 @@ copyElem from to n = do
 
 copyDir :: FilePath -> FilePath -> IO ()
 copyDir from to = do
-    contents <- Dir.getDirectoryContents from
-    (mapM_ (copyElem from to) . filter (\i -> i /= "." && i /= "..")) contents
+    contents <- listAll from
+    mapM_ (copyElem from to) contents

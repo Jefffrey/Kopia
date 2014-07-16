@@ -5,11 +5,8 @@ module Kopia.Command
     ) where
 
 import Kopia.Bridge (Bridge)
+import Kopia.Order (Order(..))
 import System.Console.CmdArgs (Data, Typeable, Default, def)
-
-data Order
-    = Oldest | Newest
-    deriving (Data, Typeable, Show, Eq)
 
 instance Default Order where
     def = Newest
