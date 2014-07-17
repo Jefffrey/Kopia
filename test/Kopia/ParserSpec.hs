@@ -17,7 +17,7 @@ spec = do
                 parse ["acb"] `shouldThrow` (== ExitFailure 1)
                 parse [] `shouldThrow` (== ExitFailure 1)
         describe "Action" $ do
-            describe "status" $ do
+            describe "test" $ do
                 it "should parse a test command" $ do
                     command <- parse ["a", "b", "test"]
                     command `shouldBe` Command (Bridge "a" "b") Test

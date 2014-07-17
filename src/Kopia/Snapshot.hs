@@ -23,6 +23,7 @@ import System.FilePath ((</>))
 import System.Locale (defaultTimeLocale)
 import Data.List (intercalate, isPrefixOf, sortBy)
 import Data.Function (on)
+import System.Directory (doesDirectoryExist)
 import Prelude hiding (take)
 import qualified Kopia.Bridge as Bridge
 import qualified Prelude as Prelude
@@ -77,15 +78,18 @@ assignIDs i (x:xs) = (i, x) : assignIDs (i + 1) xs
 list :: String -> Int -> Order -> Bridge -> IO [(Int, Snapshot)]
 list e m o b = do
     let ep = Bridge.destination b </> e
-    ds <- listDirs ep
-    
-    let fn p = do
-        let t = readUTC p
-        lt <- toLocalTime t 
-        return $ Snapshot t lt e b 
-    l <- mapM fn ds
-    let r = sortBy (compare `on` time) l
-    let ri = Prelude.take m $ assignIDs 1 r
-    if o == Oldest
-        then return $ ri
-        else return $ reverse ri
+    ed <- doesDirectoryExist ep
+    if ed 
+        then do
+            ds <- listDirs ep
+            let fn p = do
+                let t = readUTC p
+                lt <- toLocalTime t
+                return $ Snapshot t lt e b 
+            l <- mapM fn ds
+            let r = sortBy (compare `on` time) l
+            let ri = Prelude.take m $ assignIDs 1 r
+            if o == Oldest
+                then return $ ri
+                else return $ reverse ri
+        else return []

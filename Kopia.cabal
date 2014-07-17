@@ -23,7 +23,7 @@ executable Kopia
     extensions:
         DeriveDataTypeable
 
-Test-Suite test-solidran
+Test-Suite test-kopia
     type:                   exitcode-stdio-1.0
     hs-source-dirs:         test, src
     main-is:                Spec.hs

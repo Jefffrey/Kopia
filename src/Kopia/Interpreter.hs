@@ -8,8 +8,14 @@ import Kopia.Filesystem (copyDir)
 import System.Directory (getDirectoryContents)
 import qualified Kopia.Snapshot as Snapshot
 
-renderSession :: IO () -> IO ()
-renderSession a = do
+indent :: String -> String
+indent = ("    " ++)
+
+putIndentLn :: String -> IO ()
+putIndentLn = putStr . indent
+
+renderSession :: String -> IO () -> IO ()
+renderSession s a = do
     catchIOError 
         (do
             putStr "\n"
@@ -17,23 +23,26 @@ renderSession a = do
             putStr "\n")
         (\e -> do
             putStr "\n"
+            putStrLn s
             print e
             putStr "\n")
 
 execTake :: String -> Bridge -> IO ()
-execTake e b = 
-    renderSession $ do
-        s <- Snapshot.take e b
-        putStr "Snapshot taken!\n\n"
-        putStr . unlines . map ("    "++) . lines . show $ s
+execTake e b = renderSession "Could take snapshot" $ do
+    s <- Snapshot.take e b
+    putStrLn "Snapshot taken!\n"
+    putStr . unlines . map indent . lines . show $ s
 
 execList :: String -> Int -> Order -> Bridge -> IO ()
-execList e m o b =
-    renderSession $ do
+execList e m o b = 
+    renderSession "Couldn't retrieve snapshots" $ do
         sl <- Snapshot.list e m o b
-        putStr $ "Listing " ++ (show . length $ sl) ++ " snapshots:\n\n"
+        let l = length sl
+        if l > 0
+            then putStrLn $ "Listing " ++ (show l) ++ " snapshots:\n"
+            else putStrLn "No snapshots"
         mapM_ (\s -> do
-            putStr . ("    "++) . (++") ") . show . fst $ s
+            putIndentLn . (++") ") . show . fst $ s
             putStr . show . Snapshot.localTime . snd $ s
             putStr "\n") sl
 
