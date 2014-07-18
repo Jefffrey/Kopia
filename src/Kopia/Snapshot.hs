@@ -1,6 +1,7 @@
 module Kopia.Snapshot
     ( Snapshot
     , localTime
+    , formatLocalTime
     , event
     , bridge
     , location
@@ -12,7 +13,7 @@ import Data.Time
     ( UTCTime
     , LocalTime
     , formatTime
-    , readTime
+    , parseTime
     , utcToLocalTime
     , getCurrentTime
     , getCurrentTimeZone )
@@ -24,6 +25,7 @@ import System.Locale (defaultTimeLocale)
 import Data.List (intercalate, isPrefixOf, sortBy)
 import Data.Function (on)
 import System.Directory (doesDirectoryExist)
+import Control.Monad (foldM)
 import Prelude hiding (take)
 import qualified Kopia.Bridge as Bridge
 import qualified Prelude as Prelude
@@ -39,11 +41,11 @@ data Snapshot
 formatUTC :: UTCTime -> String
 formatUTC utc = formatTime defaultTimeLocale "%d-%m-%y_%H-%M-%S-%q" utc
 
-readUTC :: String -> UTCTime
-readUTC str = readTime defaultTimeLocale "%d-%m-%y_%H-%M-%S-%q" str
+readUTC :: String -> Maybe UTCTime
+readUTC str = parseTime defaultTimeLocale "%d-%m-%y_%H-%M-%S-%q" str
 
 formatLocalTime :: LocalTime -> String
-formatLocalTime lt = formatTime defaultTimeLocale "%d-%m-%y %H:%M:%S:%q" lt
+formatLocalTime lt = formatTime defaultTimeLocale "%d %B %Y (%A) at %H:%M:%S:%q" lt
 
 toLocalTime :: UTCTime -> IO LocalTime
 toLocalTime t = do
@@ -71,27 +73,26 @@ take e b = do
     copyDir (Bridge.target b) (location s)
     return s
 
-assignIDs :: Int -> [Snapshot] -> [(Int, Snapshot)]
-assignIDs _ [] = []
-assignIDs i (x:xs) = (i, x) : assignIDs (i + 1) xs
-
-list :: String -> Int -> Order -> Bridge -> IO [(Int, Snapshot)]
+list :: String -> Int -> Order -> Bridge -> IO [Snapshot]
 list e m o b = do
     let ep = Bridge.destination b </> e
     ed <- doesDirectoryExist ep
     if ed 
         then do
             ds <- listDirs ep
-            let fn p = do
+            let fn cl p = do
                     let t = readUTC p
-                    lt <- toLocalTime t
-                    return $ Snapshot t lt e b 
-            l <- mapM fn ds
+                    case t of
+                        Just tf -> do
+                            lt <- toLocalTime tf
+                            return $ Snapshot tf lt e b : cl
+                        Nothing -> return cl
+            l <- foldM fn [] ds
             let r = sortBy (compare `on` time) l
             let ri = 
                     if m > 0
-                        then Prelude.take m $ assignIDs 1 r
-                        else assignIDs 1 r
+                        then Prelude.take m r
+                        else r
             if o == Oldest
                 then return $ ri
                 else return $ reverse ri

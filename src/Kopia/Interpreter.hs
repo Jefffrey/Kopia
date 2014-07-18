@@ -12,7 +12,7 @@ indent :: String -> String
 indent = ("    " ++)
 
 putIndentLn :: String -> IO ()
-putIndentLn = putStr . indent
+putIndentLn = putStrLn . indent
 
 renderSession :: String -> IO () -> IO ()
 renderSession s a = do
@@ -35,16 +35,13 @@ execTake e b = renderSession "Could take snapshot" $ do
 
 execList :: String -> Int -> Order -> Bridge -> IO ()
 execList e m o b = 
-    renderSession "Couldn't retrieve snapshots" $ do
+    renderSession "Couldn't retrieve snapshot(s)" $ do
         sl <- Snapshot.list e m o b
         let l = length sl
         if l > 0
             then putStrLn $ "Listing " ++ (show l) ++ " snapshots:\n"
             else putStrLn "No snapshots"
-        mapM_ (\s -> do
-            putIndentLn . (++") ") . show . fst $ s
-            putStr . show . Snapshot.localTime . snd $ s
-            putStr "\n") sl
+        mapM_ (putIndentLn . Snapshot.formatLocalTime . Snapshot.localTime) sl
 
 execute :: Command -> IO ()
 execute (Command b (Take e)) = execTake e b

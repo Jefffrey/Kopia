@@ -2,79 +2,71 @@
 
 [![Build Status](https://travis-ci.org/Jefffrey/Kopia.svg?branch=master)](https://travis-ci.org/Jefffrey/Kopia)
 
-Kopia is a simple backup system. It's extremely thin and doesn't store any sort of configurations file and or junk-files.
+Kopia is a simple command-line backup system. It's extremely thin and doesn't store configurations and/or junk files.
 
-##Targets, destinations and bridges
+##Setup
 
-A *target* directory is a directory you want to take backups of. Kopia will always ask you permission to modify its contents.
+###Setting up a bridge
 
-A *destination* directory is the location in which you want to store the backups. This folder can also be non empty, but no guarantees are made to the existing contents, if any. 
+Defining a connection (namely a *bridge*) between a directory (namely a *target*) and a backup directory (namely a *destination*), is as simple as defining an alias. For UNIX systems:
 
-If the specified destination doesn't exists, then it is automatically created (even parent directories).
-
-The pair target-destination defines a *bridge*; a connection between a directory of interest and the backups location. You'll always need to specify a bridge for any operation. 
-
-It is recommended that you set aliases for common backups:
-
-```
-alias project_a='kopia "project_a/" "backups_a/"'
-alias project_b='kopia "project_b/" "backups_b/"'
+```shell
+alias bridge='kopia "target/" "destination/"'
 ```
 
-##Snapshots and events
+###Directory organization
 
-Once a bridge has been estabilished, you can take snaphots (specific revision of your target directory). 
-
-Snaphosts are always organized in groups called "*events*". An event, identified by a short (directory name friendly) name. Events allow you to easily manage groups of related snapshots as a unit.
-
-For example:
-
-```
-kopia_alias clear "event"
-kopia_alias record "event" 60
-```
-
-will respectively remove all snapshots contained in the event "event" and then start a record session that will take a snaphot every minute.
-
-##Directory organization
-
-Kopia organizes backups into a very simple and human readable form:
+Kopia organizes backups in a human readable form:
 
 ```
 destination/
     [event name]/
-        kopia_[dd]-[mm]-[yyyy]_[hh]-[mm]-[ss]/
+        [dd]-[mm]-[yyyy]_[hh]-[mm]-[ss]-[ps]/
         .../
         .../
     .../
     .../
 ```
 
-The resulting directory structure is completely indipendent from Kopia and can be manually managed without risks. Remember that Kopia also operates on the destination directory.
+The resulting directory structure is completely indipendent from Kopia and can be manually managed without risks.
 
 ##Commands
 
-You can define a bridge by specifying, in order, the target and destination, as follows:
+###Taking snapshots
 
-```
-kopia "target_a/" "destination_a/" [action]
-kopia "target_b/" "destination_b/" [action]
-```
+Once a bridge is defined, you can issue commands to control the status of both the target and the destination directory. The unit for any modification is called a *snapshot*. 
 
-A bridge is only conceptually defined. There's no need to initialize or configure a bridge. Once you have defined which is the target and which is the destination, you can issue any of the following commands.
+You just need to remember that:
 
-For convenience, we will consider the following alias:
+- a snapshot is a version of the target directory at some point in time
+- a snapshot is always saved in a specific *event* named by you.
 
-```
-alias kopia_alias='kopia "target/" "destination/"'
-```
+You can take a snapshot with:
 
-####Takings snapshots
-
-In order to take a single snapshot, you can issue:
-
-```
-kopia_alias take "name"
+```shell
+bridge take "event name"
 ```
 
-where `name` is the name of the event in which to place the snapshot.
+Notice that the event name should be directory-name friendly for you OS (make sure the characters you use are allowed).
+
+###Listing snapshots
+
+At this point to list all snapshots for a specific event:
+
+```shell
+bridge list "event name"
+```
+
+You can limit the number of results with `--max=N` and control the order with `--order=[newest|oldest]`:
+
+```shell
+bridge list "event name" --max=13 --order=oldest
+bridge list "event name" --max=0
+bridge list "event name" --order=newest
+```
+
+The above commands will yield:
+
+1. the first 13 snapshots from the newest to the oldest
+2. all the snapshots for the event (default)
+3. all the snapshots from the oldest to the newest (default)
