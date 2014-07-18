@@ -7,6 +7,7 @@ import System.IO (writeFile)
 import Control.Monad (when)
 import System.Directory
 import Kopia.Bridge
+import Kopia.Order
 import qualified Kopia.Snapshot as Snapshot
 
 dismantleSandbox :: FilePath -> IO ()
@@ -46,8 +47,44 @@ withSandbox action =
 spec :: Spec
 spec = do
     describe "Interpreter" $ do
+        describe "taking snapshots" $ do
+            it "shouldn't throw exceptions while taking a snapshot" $ do
+                withSandbox $ \b -> do
+                    s <- Snapshot.take "event" b
+                    Snapshot.event s `shouldBe` "event"
+                    Snapshot.bridge s `shouldBe` b
+            it "should have no problems with multiple takes" $ do
+                withSandbox $ \b -> do
+                    mapM_ (const $ Snapshot.take "event" b) [1..32]
         describe "listing snapshots" $ do
             it "should give an empty list for non existent event" $ do
                 withSandbox $ \b -> do
                     l <- Snapshot.list "non_existent" 10 Newest b
                     l `shouldBe` []
+            it "should return the list of snapshots for an event" $ do
+                withSandbox $ \b -> do
+                    mapM_ (const $ Snapshot.take "event" b) [1..14]
+                    l <- Snapshot.list "event" 20 Newest b
+                    length l `shouldBe` 14
+            it "shouldn't clash with different events" $ do
+                withSandbox $ \b -> do
+                    mapM_ (const $ Snapshot.take "event_a" b) [1..5]
+                    mapM_ (const $ Snapshot.take "event_b" b) [1..9]
+                    la <- Snapshot.list "event_a" 20 Newest b
+                    lb <- Snapshot.list "event_b" 20 Newest b
+                    length la `shouldBe` 5
+                    length lb `shouldBe` 9
+            it "should limit the results" $ do
+                withSandbox $ \b -> do
+                    mapM_ (const $ Snapshot.take "event" b) [1..24]
+                    la <- Snapshot.list "event" 30 Newest b
+                    lb <- Snapshot.list "event" 14 Newest b
+                    lc <- Snapshot.list "event" 1 Newest b
+                    length la `shouldBe` 24
+                    length lb `shouldBe` 14
+                    length lc `shouldBe` 1
+            it "should return all the snapshots for limit = 0" $ do
+                withSandbox $ \b -> do
+                    mapM_ (const $ Snapshot.take "event" b) [1..16]
+                    l <- Snapshot.list "event" 0 Newest b
+                    length l `shouldBe` 16

@@ -37,13 +37,13 @@ data Snapshot
     deriving (Eq)
 
 formatUTC :: UTCTime -> String
-formatUTC utc = formatTime defaultTimeLocale "%d-%m-%y_%H-%M-%S" utc
+formatUTC utc = formatTime defaultTimeLocale "%d-%m-%y_%H-%M-%S-%q" utc
 
 readUTC :: String -> UTCTime
-readUTC str = readTime defaultTimeLocale "%d-%m-%y_%H-%M-%S" str
+readUTC str = readTime defaultTimeLocale "%d-%m-%y_%H-%M-%S-%q" str
 
 formatLocalTime :: LocalTime -> String
-formatLocalTime lt = formatTime defaultTimeLocale "%d-%m-%y %H:%M:%S" lt
+formatLocalTime lt = formatTime defaultTimeLocale "%d-%m-%y %H:%M:%S:%q" lt
 
 toLocalTime :: UTCTime -> IO LocalTime
 toLocalTime t = do
@@ -83,12 +83,15 @@ list e m o b = do
         then do
             ds <- listDirs ep
             let fn p = do
-                let t = readUTC p
-                lt <- toLocalTime t
-                return $ Snapshot t lt e b 
+                    let t = readUTC p
+                    lt <- toLocalTime t
+                    return $ Snapshot t lt e b 
             l <- mapM fn ds
             let r = sortBy (compare `on` time) l
-            let ri = Prelude.take m $ assignIDs 1 r
+            let ri = 
+                    if m > 0
+                        then Prelude.take m $ assignIDs 1 r
+                        else assignIDs 1 r
             if o == Oldest
                 then return $ ri
                 else return $ reverse ri
