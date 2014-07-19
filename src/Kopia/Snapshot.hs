@@ -1,10 +1,10 @@
 module Kopia.Snapshot
     ( Snapshot
-    , localTime
-    , formatLocalTime
-    , event
-    , bridge
-    , location
+    , getTime
+    , getLocalTime
+    , getEvent
+    , getBridge
+    , getLocation
     , take
     , list
     ) where
@@ -14,9 +14,9 @@ import Data.Time
     , LocalTime
     , formatTime
     , parseTime
-    , utcToLocalTime
     , getCurrentTime
-    , getCurrentTimeZone )
+    , getCurrentTimeZone
+    , utcToLocalTime )
 import Kopia.Bridge (Bridge)
 import Kopia.Order (Order(..))
 import Kopia.Filesystem (copyDir, listDirs)
@@ -32,68 +32,67 @@ import qualified Prelude as Prelude
 
 data Snapshot
     = Snapshot
-        { time      :: UTCTime
-        , localTime :: LocalTime
-        , event     :: String
-        , bridge    :: Bridge }
-    deriving (Eq)
+        { getTime      :: UTCTime
+        , getEvent     :: String
+        , getBridge    :: Bridge }
+    deriving (Eq, Show)
 
 formatUTC :: UTCTime -> String
-formatUTC utc = formatTime defaultTimeLocale "%d-%m-%y_%H-%M-%S-%q" utc
+formatUTC = formatTime defaultTimeLocale "%d-%m-%y_%H-%M-%S-%q"
 
 readUTC :: String -> Maybe UTCTime
-readUTC str = parseTime defaultTimeLocale "%d-%m-%y_%H-%M-%S-%q" str
+readUTC = parseTime defaultTimeLocale "%d-%m-%y_%H-%M-%S-%q"
 
-formatLocalTime :: LocalTime -> String
-formatLocalTime lt = formatTime defaultTimeLocale "%d %B %Y (%A) at %H:%M:%S:%q" lt
+getLocation :: Snapshot -> FilePath
+getLocation snapshot =   (Bridge.destination . getBridge $ snapshot) 
+                  </> (getEvent snapshot) 
+                  </> (formatUTC . getTime $ snapshot)
 
-toLocalTime :: UTCTime -> IO LocalTime
-toLocalTime t = do
-    tz <- getCurrentTimeZone
-    return $ utcToLocalTime tz t
+getLocalTime :: Snapshot -> IO LocalTime
+getLocalTime snapshot = do
+    let time = getTime snapshot
+    timezone <- getCurrentTimeZone
+    return $ utcToLocalTime timezone time
 
-location :: Snapshot -> FilePath
-location s =
-    (Bridge.destination . bridge $ s) </> (event s) </> (formatUTC . time $ s)
+listSnapshots :: String -> Bridge -> IO [Snapshot]
+listSnapshots event bridge = do
+    let eventPath = Bridge.destination bridge </> event
+    eventDirExist <- doesDirectoryExist eventPath
+    if eventDirExist
+        then do
+            directories <- listDirs eventPath
+            let fn snapshotList snapshotName = do
+                    let maybeTime = readUTC snapshotName
+                    case maybeTime of
+                        Just time -> return $ 
+                            Snapshot time event bridge
+                                : snapshotList
+                        Nothing -> return snapshotList
+            foldM fn [] directories
+        else return []
 
-instance Show Snapshot where
-    show s = 
-        intercalate "\n" $
-            [ "Time: " ++ (formatLocalTime . localTime $ s)
-            , "Event: " ++ (event s)
-            , "Target: " ++ (Bridge.target . bridge $ s)
-            , "Destination: " ++ (Bridge.destination . bridge $ s)
-            , "Location: " ++ (location s) ]
+reduceSnapshots :: Int -> [Snapshot] -> [Snapshot]
+reduceSnapshots maximum =
+    if maximum > 0
+        then Prelude.take maximum
+        else id
+
+sortSnapshots :: Order -> [Snapshot] -> [Snapshot]
+sortSnapshots order =
+    let comparator = 
+            case order of
+                Oldest -> compare
+                Newest -> flip compare
+    in  sortBy (comparator `on` getTime)
 
 take :: String -> Bridge -> IO Snapshot
-take e b = do
-    t <- getCurrentTime
-    lt <- toLocalTime t 
-    let s = Snapshot t lt e b
-    copyDir (Bridge.target b) (location s)
-    return s
+take event bridge = do
+    time <- getCurrentTime
+    let snapshot = Snapshot time event bridge
+    copyDir (Bridge.target bridge) (getLocation snapshot)
+    return snapshot
 
 list :: String -> Int -> Order -> Bridge -> IO [Snapshot]
-list e m o b = do
-    let ep = Bridge.destination b </> e
-    ed <- doesDirectoryExist ep
-    if ed 
-        then do
-            ds <- listDirs ep
-            let fn cl p = do
-                    let t = readUTC p
-                    case t of
-                        Just tf -> do
-                            lt <- toLocalTime tf
-                            return $ Snapshot tf lt e b : cl
-                        Nothing -> return cl
-            l <- foldM fn [] ds
-            let r = sortBy (compare `on` time) l
-            let ri = 
-                    if m > 0
-                        then Prelude.take m r
-                        else r
-            if o == Oldest
-                then return $ ri
-                else return $ reverse ri
-        else return []
+list event maximum order bridge = do
+    snapshots <- listSnapshots event bridge
+    return (sortSnapshots order . reduceSnapshots maximum $ snapshots)

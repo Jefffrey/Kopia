@@ -1,4 +1,4 @@
-module Kopia.InterpreterSpec (spec) where
+module Kopia.SnapshotSpec (spec) where
 
 import Test.Hspec
 import Control.Exception (bracket)
@@ -8,6 +8,7 @@ import Control.Monad (when)
 import System.Directory
 import Kopia.Bridge
 import Kopia.Order
+import Data.Time (getCurrentTime)
 import qualified Kopia.Snapshot as Snapshot
 
 dismantleSandbox :: FilePath -> IO ()
@@ -51,11 +52,19 @@ spec = do
             it "shouldn't throw exceptions while taking a snapshot" $ do
                 withSandbox $ \b -> do
                     s <- Snapshot.take "event" b
-                    Snapshot.event s `shouldBe` "event"
-                    Snapshot.bridge s `shouldBe` b
+                    Snapshot.getEvent s `shouldBe` "event"
+                    Snapshot.getBridge s `shouldBe` b
             it "should have no problems with multiple takes" $ do
                 withSandbox $ \b -> do
                     mapM_ (const $ Snapshot.take "event" b) [1..32]
+            it "the time should be correct" $ do
+                withSandbox $ \b -> do
+                    before <- getCurrentTime
+                    snapshot <- Snapshot.take "event" b
+                    after <- getCurrentTime
+                    let isBetween a b e = e >= a && e <= b
+                    Snapshot.getTime snapshot 
+                        `shouldSatisfy` (isBetween before after)
         describe "listing snapshots" $ do
             it "should give an empty list for non existent event" $ do
                 withSandbox $ \b -> do

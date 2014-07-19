@@ -6,6 +6,10 @@ import Kopia.Bridge (Bridge(..))
 import Kopia.Order (Order(..))
 import Kopia.Filesystem (copyDir)
 import System.Directory (getDirectoryContents)
+import Data.Time (getCurrentTimeZone, utcToLocalTime, formatTime, LocalTime)
+import System.Locale (defaultTimeLocale)
+import Kopia.Snapshot (Snapshot)
+import Control.Monad ((<=<))
 import qualified Kopia.Snapshot as Snapshot
 
 indent :: String -> String
@@ -14,36 +18,43 @@ indent = ("    " ++)
 putIndentLn :: String -> IO ()
 putIndentLn = putStrLn . indent
 
-renderSession :: String -> IO () -> IO ()
-renderSession s a = do
+showTime :: LocalTime -> String
+showTime = formatTime defaultTimeLocale "%d %B %Y (%A) at %H:%M:%S:%q"
+
+renderSession :: IO () -> IO ()
+renderSession action = do
     catchIOError 
         (do
             putStr "\n"
-            a
+            action
             putStr "\n")
-        (\e -> do
+        (\error -> do
             putStr "\n"
-            putStrLn s
-            print e
+            putStrLn "Could perform action!"
+            print error
             putStr "\n")
 
 execTake :: String -> Bridge -> IO ()
-execTake e b = renderSession "Could take snapshot" $ do
-    s <- Snapshot.take e b
+execTake event bridge = renderSession $ do
+    snapshot <- Snapshot.take event bridge
     putStrLn "Snapshot taken!\n"
-    putStr . unlines . map indent . lines . show $ s
+    localTime <- Snapshot.getLocalTime snapshot
+    putIndentLn $ "Time: " ++ showTime localTime
 
 execList :: String -> Int -> Order -> Bridge -> IO ()
-execList e m o b = 
-    renderSession "Couldn't retrieve snapshot(s)" $ do
-        sl <- Snapshot.list e m o b
-        let l = length sl
-        if l > 0
-            then putStrLn $ "Listing " ++ (show l) ++ " snapshots:\n"
+execList event maximum order bridge = 
+    renderSession $ do
+        snapshotsList <- Snapshot.list event maximum order bridge
+        let snapshotsCount = length snapshotsList
+        if snapshotsCount > 0
+            then putStrLn $ 
+                "Listing " ++ (show snapshotsCount) ++ " snapshot(s):\n"
             else putStrLn "No snapshots"
-        mapM_ (putIndentLn . Snapshot.formatLocalTime . Snapshot.localTime) sl
+        mapM_ (putIndentLn . showTime <=< Snapshot.getLocalTime) snapshotsList
 
 execute :: Command -> IO ()
-execute (Command b (Take e)) = execTake e b
-execute (Command b (List e m o)) = execList e m o b
+execute (Command bridge (Take event)) = 
+    execTake event bridge
+execute (Command bridge (List event maximum order)) = 
+    execList event maximum order bridge
 execute _ = undefined
