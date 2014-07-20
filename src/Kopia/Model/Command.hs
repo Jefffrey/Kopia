@@ -1,11 +1,11 @@
-module Kopia.Command 
+module Kopia.Model.Command 
     ( Order(..)
     , Action(..)
     , Command(..)
     ) where
 
-import Kopia.Bridge (Bridge)
-import Kopia.Order (Order(..))
+import Kopia.Model.Bridge (Bridge)
+import Kopia.Model.Order (Order(..))
 import System.Console.CmdArgs (Data, Typeable, Default, def)
 
 instance Default Order where

@@ -1,16 +1,16 @@
 module Kopia.Interpreter (execute) where
 
-import System.IO.Error (catchIOError, ioeGetErrorString, ioeGetFileName)
-import Kopia.Command (Command(..), Action(..))
-import Kopia.Bridge (Bridge(..))
-import Kopia.Order (Order(..))
-import Kopia.Filesystem (copyDir)
-import System.Directory (getDirectoryContents)
+import System.IO.Error (catchIOError)
 import Data.Time (getCurrentTimeZone, utcToLocalTime, formatTime, LocalTime)
 import System.Locale (defaultTimeLocale)
-import Kopia.Snapshot (Snapshot)
 import Control.Monad ((<=<))
-import qualified Kopia.Snapshot as Snapshot
+import Kopia.Filesystem
+import Kopia.Model.Order (Order(..))
+import Kopia.Model.Command (Command(..), Action(..))
+import Kopia.Model.Snapshot (Snapshot)
+import Kopia.Model.Bridge (Bridge)
+import qualified Kopia.Model.Bridge as Bridge
+import qualified Kopia.Model.Snapshot as Snapshot
 
 indent :: String -> String
 indent = ("    " ++)
@@ -30,13 +30,13 @@ renderSession action = do
             putStr "\n")
         (\error -> do
             putStr "\n"
-            putStrLn "Could perform action!"
+            putStrLn "Couldn't perform action!"
             print error
             putStr "\n")
 
 execTake :: String -> Bridge -> IO ()
 execTake event bridge = renderSession $ do
-    snapshot <- Snapshot.take event bridge
+    snapshot <- takeSnapshot event bridge
     putStrLn "Snapshot taken!\n"
     localTime <- Snapshot.getLocalTime snapshot
     putIndentLn $ "Time: " ++ showTime localTime
@@ -44,7 +44,7 @@ execTake event bridge = renderSession $ do
 execList :: String -> Int -> Order -> Bridge -> IO ()
 execList event maximum order bridge = 
     renderSession $ do
-        snapshotsList <- Snapshot.list event maximum order bridge
+        snapshotsList <- listSnapshots event maximum order bridge
         let snapshotsCount = length snapshotsList
         if snapshotsCount > 0
             then putStrLn $ 

@@ -1,4 +1,4 @@
-module Kopia.Bridge where
+module Kopia.Model.Bridge where
 
 import System.Console.CmdArgs (Data, Typeable)
 

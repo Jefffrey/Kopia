@@ -2,8 +2,8 @@ module Kopia.ParserSpec where
 
 import Test.Hspec
 import Kopia.Parser
-import Kopia.Command
-import Kopia.Bridge
+import Kopia.Model.Command
+import Kopia.Model.Bridge
 import System.Exit (ExitCode(..))
     
 spec :: Spec

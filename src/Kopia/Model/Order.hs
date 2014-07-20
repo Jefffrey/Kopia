@@ -1,4 +1,4 @@
-module Kopia.Order where
+module Kopia.Model.Order where
 
 import System.Console.CmdArgs (Data, Typeable)
 
