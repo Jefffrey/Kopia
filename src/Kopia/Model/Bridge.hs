@@ -4,6 +4,6 @@ import System.Console.CmdArgs (Data, Typeable)
 
 data Bridge
     = Bridge
-        { target        :: FilePath
-        , destination   :: FilePath }
+        { getTarget        :: FilePath
+        , getDestination   :: FilePath }
     deriving (Data, Typeable, Show, Eq)

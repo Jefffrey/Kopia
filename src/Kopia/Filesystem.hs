@@ -55,13 +55,13 @@ copyDir from to = do
 
 getSnapshotLocation :: Snapshot -> FilePath
 getSnapshotLocation snapshot =
-        (Bridge.destination . Snapshot.getBridge $ snapshot) 
+        (Bridge.getDestination . Snapshot.getBridge $ snapshot) 
     </> (Snapshot.getEvent snapshot) 
     </> (formatUTC . Snapshot.getTime $ snapshot)
 
 listAllSnapshots :: String -> Bridge -> IO [Snapshot]
 listAllSnapshots event bridge = do
-    let eventPath = Bridge.destination bridge </> event
+    let eventPath = Bridge.getDestination bridge </> event
     eventDirExist <- doesDirectoryExist eventPath
     if eventDirExist
         then do
@@ -94,7 +94,7 @@ takeSnapshot :: String -> Bridge -> IO Snapshot
 takeSnapshot event bridge = do
     time <- getCurrentTime
     let snapshot = Snapshot event bridge time
-    copyDir (Bridge.target bridge) (getSnapshotLocation snapshot)
+    copyDir (Bridge.getTarget bridge) (getSnapshotLocation snapshot)
     return snapshot
 
 listSnapshots :: String -> Int -> Order -> Bridge -> IO [Snapshot]

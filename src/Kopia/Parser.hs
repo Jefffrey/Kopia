@@ -12,10 +12,10 @@ import qualified System.Console.CmdArgs as Cmd
 bridgeTemplate :: Bridge
 bridgeTemplate = 
     Bridge 
-        { target = Cmd.def 
+        { getTarget = Cmd.def 
             &= Cmd.argPos 0
             &= Cmd.typ "TARGET" 
-        , destination = Cmd.def 
+        , getDestination = Cmd.def 
             &= Cmd.argPos 1 
             &= Cmd.typ "DESTINATION" }
     &= Cmd.summary "Kopia - backup system"
@@ -32,64 +32,68 @@ testActionTemplate = Test &= Cmd.help "Tests the bridge"
 takeActionTemplate :: Action
 takeActionTemplate = 
     Take 
-        { name = Cmd.def 
+        { getEvent = Cmd.def 
             &= Cmd.argPos 0 
-            &= Cmd.typ "NAME" }
+            &= Cmd.typ "EVENT" }
     &= Cmd.help "Takes a snapshot for an event"
 
 recordActionTemplate :: Action
 recordActionTemplate =
     Record
-        { name = Cmd.def
+        { getEvent = Cmd.def
             &= Cmd.argPos 0
-            &= Cmd.typ "NAME"
-        , minutes = Cmd.def
+            &= Cmd.typ "EVENT"
+        , getMinutes = Cmd.def
             &= Cmd.argPos 1
             &= Cmd.typ "MINUTES"
-        , max = 1
+        , getMax = 1
+            &= Cmd.name "max"
             &= Cmd.typ "MAXIMUM" }
     &= Cmd.help "Takes a serie of snapshots every MINUTES minutes"
                 
 listActionTemplate :: Action
 listActionTemplate =
     List
-        { name = Cmd.def
+        { getEvent = Cmd.def
             &= Cmd.argPos 0
-            &= Cmd.typ "NAME"
-        , max = 100
+            &= Cmd.typ "EVENT"
+        , getMax = 100
+            &= Cmd.name "max"
             &= Cmd.typ "MAXIMUM"
-        , order = Cmd.def
+        , getOrder = Cmd.def
+            &= Cmd.name "order"
             &= Cmd.typ "ORDER" }
     &= Cmd.help "Lists all the snapshots of an event"
 
 clearActionTemplate :: Action
 clearActionTemplate =
     Clear
-        { name = Cmd.def
+        { getEvent = Cmd.def
             &= Cmd.argPos 0
-            &= Cmd.typ "NAME" }
+            &= Cmd.typ "EVENT" }
     &= Cmd.help "Deletes every snapshot of an event"
 
 removeActionTemplate :: Action
 removeActionTemplate =
     Remove 
-        { name = Cmd.def
+        { getEvent = Cmd.def
             &= Cmd.argPos 0
-            &= Cmd.typ "NAME"
-        , from = Cmd.def
+            &= Cmd.typ "EVENT"
+        , getStartID = Cmd.def
             &= Cmd.argPos 1
             &= Cmd.typ "ID"
-        , max = 1
+        , getMax = 1
+            &= Cmd.name "max"
             &= Cmd.typ "MAXIMUM" }
     &= Cmd.help "Removes a set of snapshots from an event"
 
 restoreActionTemplate :: Action
 restoreActionTemplate =
     Restore
-        { name = Cmd.def
+        { getEvent = Cmd.def
             &= Cmd.argPos 0
-            &= Cmd.typ "NAME"
-        , id = Cmd.def
+            &= Cmd.typ "EVENT"
+        , getID = Cmd.def
             &= Cmd.argPos 1
             &= Cmd.typ "ID" }
     &= Cmd.help "Restores a specific snapshot of an event"

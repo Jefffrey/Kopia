@@ -13,14 +13,16 @@ instance Default Order where
 
 data Action
     = Test
-    | Take { name :: String }
-    | Record { name :: String, minutes :: Int, max :: Int }
-    | List { name :: String, max :: Int, order :: Order }
-    | Clear { name :: String }
-    | Remove { name :: String, from :: Int, max :: Int }
-    | Restore { name :: String, id :: Int }
+    | Take      { getEvent :: String }
+    | Record    { getEvent :: String, getMinutes :: Int, getMax :: Int }
+    | List      { getEvent :: String, getMax :: Int, getOrder :: Order }
+    | Clear     { getEvent :: String }
+    | Remove    { getEvent :: String, getStartID :: Int, getMax :: Int }
+    | Restore   { getEvent :: String, getID :: Int }
     deriving (Data, Typeable, Show, Eq)
 
 data Command 
-    = Command Bridge Action 
+    = Command 
+        { getBridge :: Bridge 
+        , getAction :: Action }
     deriving (Eq, Show)
