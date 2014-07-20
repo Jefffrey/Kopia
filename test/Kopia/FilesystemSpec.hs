@@ -7,6 +7,7 @@ import System.IO (writeFile)
 import Control.Monad (when)
 import Data.Time (getCurrentTime)
 import System.Directory
+import System.Exit (ExitCode(..))
 import Kopia.Model.Bridge
 import Kopia.Model.Order
 import Kopia.Filesystem
@@ -98,3 +99,23 @@ spec = do
                     mapM_ (const $ takeSnapshot "event" b) [1..16]
                     l <- listSnapshots "event" 0 Newest b
                     length l `shouldBe` 16
+        describe "clearing events" $ do
+            it "should throw on missing event" $ do
+                withSandbox $ \b -> do
+                    clearEvent "missing" b `shouldThrow` anyIOException
+            it "should clear an event" $ do
+                withSandbox $ \b -> do
+                    mapM_ (const $ takeSnapshot "event_a" b) [1..8]
+                    mapM_ (const $ takeSnapshot "event_b" b) [1..4]
+
+                    clearEvent "event_a" b
+                    eventACount <- listSnapshots "event_a" 0 Oldest b
+                    eventBCount <- listSnapshots "event_b" 0 Oldest b
+                    length eventACount `shouldBe` 0
+                    length eventBCount `shouldBe` 4
+
+                    clearEvent "event_b" b
+                    eventACount <- listSnapshots "event_a" 0 Oldest b
+                    eventBCount <- listSnapshots "event_b" 0 Oldest b
+                    length eventACount `shouldBe` 0
+                    length eventBCount `shouldBe` 0

@@ -52,9 +52,14 @@ execList event maximum order bridge =
             else putStrLn "No snapshots"
         mapM_ (putIndentLn . showTime <=< Snapshot.getLocalTime) snapshotsList
 
+execClear :: String -> Bridge -> IO ()
+execClear event bridge = do
+    renderSession $ do
+        clearEvent event bridge
+        putStr "Event cleared"
+
 execute :: Command -> IO ()
-execute (Command bridge (Take event)) = 
-    execTake event bridge
-execute (Command bridge (List event maximum order)) = 
-    execList event maximum order bridge
+execute (Command bridge (Take event)) = execTake event bridge
+execute (Command bridge (List event maximum order)) = execList event maximum order bridge
+execute (Command bridge (Clear event)) = execClear event bridge
 execute _ = undefined

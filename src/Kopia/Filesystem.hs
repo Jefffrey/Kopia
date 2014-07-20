@@ -1,6 +1,7 @@
 module Kopia.Filesystem
     ( takeSnapshot
     , listSnapshots
+    , clearEvent
     ) where
 
 import Data.Time (UTCTime, getCurrentTime, formatTime, parseTime)
@@ -11,7 +12,8 @@ import System.Directory
     , doesDirectoryExist
     , doesFileExist
     , createDirectoryIfMissing
-    , copyFile )
+    , copyFile
+    , removeDirectoryRecursive )
 import System.Locale (defaultTimeLocale)
 import Data.List (sortBy)
 import Data.Function (on)
@@ -59,6 +61,10 @@ getSnapshotLocation snapshot =
     </> (Snapshot.getEvent snapshot) 
     </> (formatUTC . Snapshot.getTime $ snapshot)
 
+getEventLocation :: String -> Bridge -> FilePath
+getEventLocation event bridge =
+    (Bridge.getDestination bridge) </> event
+
 listAllSnapshots :: String -> Bridge -> IO [Snapshot]
 listAllSnapshots event bridge = do
     let eventPath = Bridge.getDestination bridge </> event
@@ -101,3 +107,8 @@ listSnapshots :: String -> Int -> Order -> Bridge -> IO [Snapshot]
 listSnapshots event maximum order bridge = do
     snapshots <- listAllSnapshots event bridge
     return (sortSnapshots order . reduceSnapshots maximum $ snapshots)
+
+clearEvent :: String -> Bridge -> IO ()
+clearEvent event bridge = do
+    let eventPath = getEventLocation event bridge
+    removeDirectoryRecursive eventPath
